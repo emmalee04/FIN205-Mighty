@@ -1,24 +1,26 @@
+import getpass
 import requests
 import csv
 from bs4 import BeautifulSoup
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
-def scrape_page(soup, users, responses):
-    feed_cards = soup.find_all('li', class_='feed-item')
+def scrape_page(driver, users, responses):
+    feed_cards = driver.find_elements(By.CSS_SELECTOR, 'li.feed-item')
     print(f"Number of feed cards found: {len(feed_cards)}")
     for feed_card in feed_cards:
         # Extract main user name
-        user = feed_card.find('a', class_='mighty-attribution-name')
+        user = feed_card.find_element(By.CSS_SELECTOR, 'a.mighty-attribution-name')
         if user:
             user_name = user.text.strip()
             users.add(user_name)
 
         # Extract responders' names
-        comments = feed_card.find('ul', class_='comments-list')
+        comments = feed_card.find_elements(By.CSS_SELECTOR, 'ul.comments-list li.comment-item')
         if comments:
             comment_items = comments.find_all('li', class_='comment-item')
             for comment in comment_items:
@@ -28,6 +30,9 @@ def scrape_page(soup, users, responses):
                     responses.add(response_user_name)
 
 if __name__ == "__main__":
+
+  email_input = input("Enter your email: ")
+  password_input = getpass.getpass("Enter your password: ")
 
   # Retrieve page & parse
   options = uc.ChromeOptions()
@@ -42,52 +47,39 @@ if __name__ == "__main__":
 
   # fill in the email field
   email = driver.find_element(By.CLASS_NAME, "email-input")
-  email.send_keys("slee04@uw.edu")
+  email.send_keys(email_input)
   
   # fill in the password field
   password = driver.find_element(By.CLASS_NAME, "password-input")
-  password.send_keys("Emmerthewheat2004!")
+  password.send_keys(password_input)
 
   # submit the login form
   driver.find_element(By.CLASS_NAME, "actions").click()
   time.sleep(5)
 
   # navigate to wealth & income inequality
-  # driver.find_element(By.CSS_SELECTOR, "div.iBfMvEeuuz3wuXRxWVoV.v7J_BVc0_lX7U0MCslGA.qOUm2VYYHK9kmAWnIpTV.selected").click()
-  # time.sleep(5)
+  
+  feed_url = 'https://personal-finance-literacy.mn.co/spaces/16527694/feed'
+  driver.get(feed_url)
 
-  assignment_tab = WebDriverWait(driver, 10).until(
-    EC.element_to_be_clickable((By.CSS_SELECTOR, "div.iBfMvEeuuz3wuXRxWVoV.v7J_BVc0_lX7U0MCslGA.qOUm2VYYHK9kmAWnIpTV.selected"))
-  )
+  # Wait for the feed page to load
+  wait = WebDriverWait(driver, 30)
+  try:
+    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "li.feed-item")))
+    print("Successfully navigated to the feed page")
+  except TimeoutException:
+    print("Feed page did not load within the expected time")
 
-  # Click the Feed tab
-  assignment_tab.click()
-
-  # Wait for the new page to load
-  WebDriverWait(driver, 10).until(
-    EC.url_contains("https://personal-finance-literacy.mn.co/spaces/16527694/page")
-  )
-
-  feed_tab = WebDriverWait(driver, 10).until(
-    EC.element_to_be_clickable((By.CSS_SELECTOR, "div.IrT8wZUpENfgA4h4tZdZ.ZN2JhFu3bpToBNa9PGgt a.flex-space-tab-link"))
-  )
-
-  # Click the Feed tab
-  feed_tab.click()
-
-  # Wait for the new page to load
-  WebDriverWait(driver, 10).until(
-    EC.url_contains("https://personal-finance-literacy.mn.co/spaces/16527694/feed")
-  )
+  time.sleep(5)
 
 
-# users = set()
-# responses = set()
+  users = set()
+  responses = set()
 
-# scrape_page(soup, users, responses)
+  # scrape_page(driver, users, responses)
 
-# print(users)
-# print(responses)
+  print(users)
+  print(responses)
 
 # # Open the "users.csv" file and create it if not present
 # with open('users.csv', 'w', encoding='utf-8', newline='') as csv_file:
