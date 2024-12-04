@@ -1,7 +1,5 @@
 import getpass
-import requests
 import csv
-from bs4 import BeautifulSoup
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -9,25 +7,33 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
-def scrape_page(driver, users, responses):
-    feed_cards = driver.find_elements(By.CSS_SELECTOR, 'li.feed-item')
-    print(f"Number of feed cards found: {len(feed_cards)}")
-    for feed_card in feed_cards:
-        # Extract main user name
-        user = feed_card.find_element(By.CSS_SELECTOR, 'a.mighty-attribution-name')
-        if user:
-            user_name = user.text.strip()
-            users.add(user_name)
+def scrape_page(driver):
+  user_data = {}
+  feed_cards = driver.find_elements(By.CLASS_NAME, 'feed-item')
+  print(f"Number of feed cards found: {len(feed_cards)}")
+  for feed_card in feed_cards:
+    # Extract main user name
+    user = feed_card.find_element(By.CLASS_NAME, 'mighty-attribution-name')
+    if user:
+      user_name = user.text.strip()
+      print(f"user: {user_name}")
+      # users.add(user_name)
+      if user_name not in user_data:
+        user_data[user_name] = [0, 0]
+      user_data[user_name][0] += 1  # Increment post count
 
-        # Extract responders' names
-        comments = feed_card.find_elements(By.CSS_SELECTOR, 'ul.comments-list li.comment-item')
-        if comments:
-            comment_items = comments.find_all('li', class_='comment-item')
-            for comment in comment_items:
-                response_user = comment.find('a', class_='author-name')
-                if response_user:
-                    response_user_name = response_user.text.strip()
-                    responses.add(response_user_name)
+    # Extract responders' names
+    comments = feed_card.find_elements(By.CLASS_NAME, 'comment-item')
+    for comment in comments:
+      response_user = comment.find_element(By.CLASS_NAME, 'author-name')
+      if response_user:
+        response_user_name = response_user.text.strip()
+        print(f"response user: {response_user_name}")
+        # responses.add(response_user_name)
+        if response_user_name not in user_data:
+          user_data[response_user_name] = [0, 0]
+        user_data[response_user_name][1] += 1  # Increment response count
+  return [[user, data[0], data[1]] for user, data in user_data.items()]
 
 if __name__ == "__main__":
 
@@ -72,27 +78,32 @@ if __name__ == "__main__":
 
   time.sleep(5)
 
-
-  users = set()
-  responses = set()
-
-  # scrape_page(driver, users, responses)
-
-  print(users)
-  print(responses)
-
-# # Open the "users.csv" file and create it if not present
-# with open('users.csv', 'w', encoding='utf-8', newline='') as csv_file:
-#     writer = csv.writer(csv_file)
+  driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+  last_height = driver.execute_script("return document.body.scrollHeight")
+  while True:
+    # Scroll down to the bottom
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
     
-#     # Writing the header of the CSV file
-#     writer.writerow(['User Type', 'Name'])
+    # Wait for new content to load
+    time.sleep(2)
     
-#     # Writing each row of the CSV
-#     for user in users:
-#         writer.writerow(['Post Author', user])
-    
-#     for response in responses:
-#         writer.writerow(['Responder', response])
+    # Calculate new scroll height and compare with last scroll height
+    new_height = driver.execute_script("return document.body.scrollHeight")
+    if new_height == last_height:
+        break
+    last_height = new_height
 
-# print("Data has been successfully written to users.csv")
+  user_data = scrape_page(driver)
+
+  # print(user_data)
+
+  # Open the "users.csv" file and create it if not present
+  with open('users.csv', 'w', encoding='utf-8', newline='') as csv_file:
+    writer = csv.writer(csv_file)
+
+    writer.writerow(['Name', 'Posts', 'Responses'])
+    for user in user_data:
+      writer.writerow(user)
+
+  print("Data has been successfully written to users.csv")
+  driver.quit()
