@@ -1,7 +1,7 @@
 # FIN205-Mighty
 
 ## About
-A python web scraper to retrieve the list of students that created & responded to the discussion posts on the FIN205 Mighty platform for automating parts of the grading process.
+A directory of python web scrapers that retrieve and compile data from the FIN205 Mighty platform to automate parts of the grading process.
 
 ## Built With
 [![tech](https://skillicons.dev/icons?i=python,selenium)](https://skillicons.dev)
@@ -20,7 +20,7 @@ Need Python locally installed.
 * Run the following script to run the file:
   
   ```sh
-  python scraper.py
+  python filename.py
   ```
 * The terminal will prompt for your Mighty sign-in (email, password)
 * After the program finishes, the result will be written in the csv file.
