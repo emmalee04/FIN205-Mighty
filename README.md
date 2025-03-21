@@ -25,7 +25,7 @@ Need Python locally installed.
 * The terminal will prompt for your Mighty sign-in (email, password)
 * After the program finishes, the result will be written in the csv file.
 * You can open the CSV file in Excel, Numbers, etc.
-* The CSV file contains information such as post count, reply count, post word ocunt, etc.
+* The CSV file contains information such as post count, reply count, post word count, etc.
 
 ## Contact
 
