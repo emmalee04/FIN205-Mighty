@@ -17,6 +17,7 @@ Need Python locally installed.
 
 * Download code by navigating to Code > Download zip
 * Open Terminal and navigate to the downloaded folder directory
+* Note: you may need to change the link that navigates to the class feed for different quarters. If so, ctrl-F find "feed-url" and replace the url with the correct one.
 * Run the following script to run the file:
   
   ```sh
